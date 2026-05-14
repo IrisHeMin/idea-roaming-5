@@ -1,5 +1,5 @@
 // Idea Roaming 5 - simple offline cache
-const CACHE = 'ir5-v3';
+const CACHE = 'ir5-v4';
 const ASSETS = [
   './',
   './index.html',

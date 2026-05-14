@@ -1558,7 +1558,13 @@ function init(){
 init();
 </script>
 
-<button id="pwaInstallBtn" style="display:none;position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;border:none;border-radius:30px;background:linear-gradient(135deg,#ffe66d,#ff9f43);color:#1a1f2e;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)">📲 安装到桌面 · Install</button>
+<button id="pwaInstallBtn" style="position:fixed;bottom:20px;right:20px;z-index:9999;padding:12px 18px;border:none;border-radius:30px;background:linear-gradient(135deg,#ffe66d,#ff9f43);color:#1a1f2e;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.4)">📲 安装到桌面 · Install</button>
+
+<div id="pwaHelp" style="display:none;position:fixed;bottom:80px;right:20px;z-index:9999;max-width:340px;padding:16px;border-radius:14px;background:#1a1f2e;color:#fff;font-size:13px;line-height:1.6;box-shadow:0 10px 30px rgba(0,0,0,.5);border:1px solid #ffe66d">
+  <div style="font-weight:700;color:#ffe66d;margin-bottom:8px">📲 怎么安装到桌面？ · How to install</div>
+  <div id="pwaHelpContent" style="color:#ddd"></div>
+  <button onclick="document.getElementById('pwaHelp').style.display='none'" style="margin-top:10px;padding:6px 12px;border:none;border-radius:8px;background:#3a4050;color:#fff;cursor:pointer;font-size:12px">知道了 · Got it</button>
+</div>
 <script>
 // ====================== PWA: Service Worker + Install ======================
 if ('serviceWorker' in navigator) {
@@ -1570,19 +1576,47 @@ let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredPrompt = e;
-  const btn = document.getElementById('pwaInstallBtn');
-  if (btn) btn.style.display = 'inline-block';
 });
+function showInstallHelp(){
+  const ua = navigator.userAgent;
+  const isIOS = /iPad|iPhone|iPod/.test(ua);
+  const isAndroid = /Android/.test(ua);
+  const isEdge = /Edg\//.test(ua);
+  const isChrome = /Chrome\//.test(ua) && !isEdge;
+  const isSafari = /Safari\//.test(ua) && !isChrome && !isEdge;
+  let html = '';
+  if (isIOS && isSafari) {
+    html = '<b>iPhone / iPad (Safari):</b><br>1. 点击底部 <b>分享按钮 ⬆️</b><br>2. 向下滑动，选 <b>"添加到主屏幕"</b><br>3. 右上角 "添加"';
+  } else if (isAndroid) {
+    html = '<b>Android (Chrome/Edge):</b><br>1. 点右上角 <b>⋮ 菜单</b><br>2. 选 <b>"安装应用"</b> 或 <b>"添加到主屏幕"</b>';
+  } else if (isChrome || isEdge) {
+    html = '<b>电脑 (Chrome / Edge):</b><br>1. 看地址栏右侧，有个 <b>⊕ 安装图标</b>，点一下<br>2. 或点 <b>⋮ 菜单 → 应用 → 安装此站点</b><br><br>如果都找不到，说明可能已经装过了，去开始菜单搜 "Idea Roaming"';
+  } else if (isSafari) {
+    html = '<b>Mac Safari:</b><br>1. 菜单栏 <b>文件 → 添加到程序坞</b>';
+  } else {
+    html = '请使用 <b>Chrome / Edge / Safari</b> 打开此页面，然后在浏览器菜单中找 <b>"安装应用"</b> 或 <b>"添加到主屏幕"</b>。<br><br>Use <b>Chrome / Edge / Safari</b>, then look for <b>"Install app"</b> in the browser menu.';
+  }
+  document.getElementById('pwaHelpContent').innerHTML = html;
+  document.getElementById('pwaHelp').style.display = 'block';
+}
 document.getElementById('pwaInstallBtn').addEventListener('click', async () => {
-  if (!deferredPrompt) return;
-  deferredPrompt.prompt();
-  const { outcome } = await deferredPrompt.userChoice;
-  deferredPrompt = null;
-  document.getElementById('pwaInstallBtn').style.display = 'none';
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    document.getElementById('pwaInstallBtn').style.display = 'none';
+  } else {
+    showInstallHelp();
+  }
 });
 window.addEventListener('appinstalled', () => {
   document.getElementById('pwaInstallBtn').style.display = 'none';
+  document.getElementById('pwaHelp').style.display = 'none';
 });
+// hide button if already running as installed PWA
+if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+  document.getElementById('pwaInstallBtn').style.display = 'none';
+}
 </script>
 </body>
 </html>
